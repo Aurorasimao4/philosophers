@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   routine.c                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asimao <asimao@student.42.fr>              +#+  +:+       +#+        */
+/*   By: marvin <marvin@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 06:01:07 by asimao            #+#    #+#             */
-/*   Updated: 2024/10/23 06:01:30 by asimao           ###   ########.fr       */
+/*   Updated: 2024/10/24 21:27:42 by marvin           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,8 +21,8 @@ static void	lock_forks(t_philosopher *p, t_norms *n, int f_l, int f_r)
 	}
 	else
 	{
-		pthread_mutex_lock(&(n->forks[f_r]));
-		pthread_mutex_lock(&(n->forks[f_l]));
+		pthread_mutex_unlock(&(n->forks[f_r]));
+		pthread_mutex_unlock(&(n->forks[f_l]));
 	}
 }
 
@@ -38,9 +38,9 @@ void	philo_eats(t_philosopher *philo)
 		lock_forks(philo, norms, philo->l_fork_id, philo->r_fork_id);
 		action_write(norms, philo->id, "Pegou o garfo");
 		action_write(norms, philo->id, "Pegou o garfo");
-		pthread_mutex_lock(&(norms->meal_check));
+		//pthread_mutex_lock(&(norms->meal_check));
 		philo->t_last_meal = timestamp();
-		pthread_mutex_unlock(&(norms->meal_check));
+		//pthread_mutex_unlock(&(norms->meal_check));
 		action_write(norms, philo->id, "Esta comendo");
 		waiting(norms->time_to_eat, norms);
 		pthread_mutex_lock(&(norms->m_all_ate));
@@ -48,6 +48,7 @@ void	philo_eats(t_philosopher *philo)
 		pthread_mutex_unlock(&(norms->m_all_ate));
 		pthread_mutex_unlock(&(norms->forks[philo->l_fork_id]));
 		pthread_mutex_unlock(&(norms->forks[philo->r_fork_id]));
+	
 	}
 	else
 		pthread_mutex_unlock(&(norms->m_died));
