@@ -12,111 +12,111 @@
 
 #include "philo.h"
 
-static void	lock_forks(t_philosopher *p, t_rules *r, int f_l, int f_r)
+static void	lock_forks(t_philosopher *p, t_norms *n, int f_l, int f_r)
 {
 	if (p->id % 2 == 0)
 	{
-		pthread_mutex_lock(&(r->forks[f_l]));
-		pthread_mutex_lock(&(r->forks[f_r]));
+		pthread_mutex_lock(&(n->forks[f_l]));
+		pthread_mutex_lock(&(n->forks[f_r]));
 	}
 	else
 	{
-		pthread_mutex_lock(&(r->forks[f_r]));
-		pthread_mutex_lock(&(r->forks[f_l]));
+		pthread_mutex_lock(&(n->forks[f_r]));
+		pthread_mutex_lock(&(n->forks[f_l]));
 	}
 }
 
 void	philo_eats(t_philosopher *philo)
 {
-	t_rules	*rules;
+	t_norms	*norms;
 
-	rules = philo->rules;
-	pthread_mutex_lock(&(rules->m_died));
-	if (!(rules->died))
+	norms = philo->norms;
+	pthread_mutex_lock(&(norms->m_died));
+	if (!(norms->died))
 	{
-		pthread_mutex_unlock(&(rules->m_died));
-		lock_forks(philo, rules, philo->left_fork_id, philo->right_fork_id);
-		action_write(rules, philo->id, "has taken a fork");
-		action_write(rules, philo->id, "has taken a fork");
-		pthread_mutex_lock(&(rules->meal_check));
+		pthread_mutex_unlock(&(norms->m_died));
+		lock_forks(philo, norms, philo->l_fork_id, philo->r_fork_id);
+		action_write(norms, philo->id, "Pegou o garfo");
+		action_write(norms, philo->id, "Pegou o garfo");
+		pthread_mutex_lock(&(norms->meal_check));
 		philo->t_last_meal = timestamp();
-		pthread_mutex_unlock(&(rules->meal_check));
-		action_write(rules, philo->id, "is eating");
-		waiting(rules->time_eat, rules);
-		pthread_mutex_lock(&(rules->m_all_ate));
-		(philo->x_ate)++;
-		pthread_mutex_unlock(&(rules->m_all_ate));
-		pthread_mutex_unlock(&(rules->forks[philo->left_fork_id]));
-		pthread_mutex_unlock(&(rules->forks[philo->right_fork_id]));
+		pthread_mutex_unlock(&(norms->meal_check));
+		action_write(norms, philo->id, "Esta comendo");
+		waiting(norms->time_to_eat, norms);
+		pthread_mutex_lock(&(norms->m_all_ate));
+		(philo->num_ate)++;
+		pthread_mutex_unlock(&(norms->m_all_ate));
+		pthread_mutex_unlock(&(norms->forks[philo->l_fork_id]));
+		pthread_mutex_unlock(&(norms->forks[philo->r_fork_id]));
 	}
 	else
-		pthread_mutex_unlock(&(rules->m_died));
+		pthread_mutex_unlock(&(norms->m_died));
 }
 
 void	*p_thread(void *my_philo)
 {
 	t_philosopher	*philo;
-	t_rules			*rules;
+	t_norms			*norms;
 
 	philo = (t_philosopher *)my_philo;
-	rules = philo->rules;
+	norms = philo->norms;
 	while (1)
 	{
-		pthread_mutex_lock(&(rules->m_died));
-		if (rules->died)
+		pthread_mutex_lock(&(norms->m_died));
+		if (norms->died)
 		{
-			pthread_mutex_unlock(&(rules->m_died));
+			pthread_mutex_unlock(&(norms->m_died));
 			return (NULL);
 		}
-		pthread_mutex_unlock(&(rules->m_died));
-		if (rules->all_ate)
+		pthread_mutex_unlock(&(norms->m_died));
+		if (norms->all_ate)
 			break ;
 		philo_eats(philo);
-		if (rules->all_ate)
+		if (norms->all_ate)
 			break ;
-		action_write(rules, philo->id, "is sleeping");
-		waiting(rules->time_sleep, rules);
-		action_write(rules, philo->id, "is thinking");
+		action_write(norms, philo->id, "Esta dormindo");
+		waiting(norms->time_to_sleep, norms);
+		action_write(norms, philo->id, "Esta pensando");
 	}
 	return (NULL);
 }
 
-static void	death_verify_aux(t_rules *r, t_philosopher *p, int i)
+static void	death_verify_aux(t_norms *n, t_philosopher *p, int i)
 {
-	pthread_mutex_lock(&(r->meal_check));
-	if (time_diff(p[i].t_last_meal, timestamp()) > r->time_death)
+	pthread_mutex_lock(&(n->meal_check));
+	if (time_diff(p[i].t_last_meal, timestamp()) > n->time_to_death)
 	{
-		action_write(r, i + 1, "died");
-		pthread_mutex_lock(&(r->m_died));
-		r->died = 1;
-		pthread_mutex_unlock(&(r->m_died));
+		action_write(n, i + 1, "morto");
+		pthread_mutex_lock(&(n->m_died));
+		n->died = 1;
+		pthread_mutex_unlock(&(n->m_died));
 	}
-	pthread_mutex_unlock(&(r->meal_check));
+	pthread_mutex_unlock(&(n->meal_check));
 }
 
-void	death_verify(t_rules *r, t_philosopher *p)
+void	death_verify(t_norms *n, t_philosopher *p)
 {
 	int	i;
 
-	pthread_mutex_lock(&(r->m_eat_all));
-	while (!(r->all_ate))
+	pthread_mutex_lock(&(n->m_eat_all));
+	while (!(n->all_ate))
 	{
 		i = -1;
-		while (++i < r->nb_philo && !(r->died))
-			death_verify_aux(r, p, i);
-		pthread_mutex_lock(&(r->m_died));
-		if (r->died)
+		while (++i < n->philo_nbr && !(n->died))
+			death_verify_aux(n, p, i);
+		pthread_mutex_lock(&(n->m_died));
+		if (n->died)
 		{
-			pthread_mutex_unlock(&(r->m_died));
+			pthread_mutex_unlock(&(n->m_died));
 			break ;
 		}
 		else
-			pthread_mutex_unlock(&(r->m_died));
+			pthread_mutex_unlock(&(n->m_died));
 		i = 0;
-		while (r->nb_eat != -1 && i < r->nb_philo && p[i].x_ate >= r->nb_eat)
+		while (n->nb_eat != -1 && i < n->philo_nbr && p[i].num_ate >= n->nb_eat)
 			i++;
-		if (i == r->nb_philo)
-			r->all_ate = 1;
+		if (i == n->philo_nbr)
+			n->all_ate = 1;
 	}
-	pthread_mutex_unlock(&(r->m_eat_all));
+	pthread_mutex_unlock(&(n->m_eat_all));
 }

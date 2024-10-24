@@ -10,94 +10,125 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-int	init_mutex(t_rules *rules)
-{
-	int	i;
+#include "philo.h"
 
-	i = rules->nb_philo + 1;
+int	init_mutex(t_norms *norms)
+{
+	/*int	i;
+
+	i = norms->philo_nbr + 1;
 	while (--i > 0)
 	{
-		if (pthread_mutex_init(&(rules->forks[i]), NULL))
+		if (pthread_mutex_init(&(norms->forks[i]), NULL))
 			return (1);
-	}
-	if (pthread_mutex_init(&(rules->writing), NULL))
+	}*/
+	if (pthread_mutex_init(&(norms->writing), NULL))
 		return (1);
-	if (pthread_mutex_init(&(rules->meal_check), NULL))
+	if (pthread_mutex_init(&(norms->meal_check), NULL))
 		return (1);
-	if (pthread_mutex_init(&(rules->m_died), NULL))
+	if (pthread_mutex_init(&(norms->m_died), NULL))
 		return (1);
-	if (pthread_mutex_init(&(rules->m_eat_all), NULL))
+	if (pthread_mutex_init(&(norms->m_eat_all), NULL))
 		return (1);
-	if (pthread_mutex_init(&(rules->m_waiting), NULL))
+	if (pthread_mutex_init(&(norms->m_waiting), NULL))
 		return (1);
-	if (pthread_mutex_init(&(rules->m_all_ate), NULL))
+	if (pthread_mutex_init(&(norms->m_all_ate), NULL))
 		return (1);
 	return (0);
 }
 
-int	init_philosophers(t_rules *rules)
+int	init_philosophers(t_philosopher **p, t_norms *norms) {
+    int i;
+    int	right;
+
+    *p = (t_philosopher *)malloc(sizeof(t_philosopher) * norms->philo_nbr);
+    norms->forks = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t) * norms->philo_nbr);
+    if (!*p || !norms->forks) {
+        printf("Erro ao alocar philo ou garfos\n");
+        return -1; // Retorne um código de erro apropriado
+    }
+    
+    for (i = 0; i < norms->philo_nbr; i++) {
+        (*p)[i].id = i + 1;
+        (*p)[i].num_ate = 0;
+        (*p)[i].norms = norms;
+	if ((*p)[i].id == 1)
+		right = norms->philo_nbr;
+	else
+		right = (*p)[i].id - 1;
+	(*p)[i].l_fork_id = i + 1;
+	(*p)[i].r_fork_id = right;
+	(*p)[i].t_last_meal = 0;
+    }
+
+    for (i = 0; i < norms->philo_nbr; i++) {
+        pthread_mutex_init(&(norms->forks[i]), NULL);
+    }
+    return 0; // Sucesso
+    }
+
+/*int	init_philosophers(t_philosopher *p, t_norms *norms)
 {
 	int	i;
 	int	right;
 
+	p =(t_philosopher *) malloc(sizeof(t_philosopher ) * norms->philo_nbr);
+	norms->forks = malloc(sizeof(pthread_mutex_t) * norms->philo_nbr);
+	if(!p || !norms->forks)
+		return (0 * printf("Erro ao alocar philo ou garfos\n"));
 	i = 0;
-	while (i < rules->nb_philo)
+	while (i < norms->philo_nbr)
 	{
-		rules->philosophers[i].id = i + 1;
-		if (rules->philosophers[i].id == 1)
-			right = rules->nb_philo;
-		else
-			right = rules->philosophers[i].id - 1;
-		rules->philosophers[i].x_ate = 0;
-		rules->philosophers[i].left_fork_id = i + 1;
-		rules->philosophers[i].right_fork_id = right;
-		rules->philosophers[i].t_last_meal = 0;
-		rules->philosophers[i].rules = rules;
+		p[i].id = i + 1;
+		p[i].num_ate = 0;
+		p[i].norms = norms;
+		pthread_mutex_init(&(norms->forks[i]), NULL);
 		i++;
 	}
+	printf("Passou aqui 3\n");
 	return (0);
-}
+}*/
 
-int	init_all(t_rules *rules, char **argv)
+int	init_all(t_philosopher *philo, t_norms *norms, char **argv)
 {
-	rules->nb_philo = ft_atoi(argv[1]);
-	rules->time_death = ft_atoi(argv[2]);
-	rules->time_eat = ft_atoi(argv[3]);
-	rules->time_sleep = ft_atoi(argv[4]);
-	rules->all_ate = 0;
-	rules->died = 0;
-	if (rules->nb_philo == 1)
+	norms->philo_nbr = ft_atoi(argv[1]);
+	norms->time_to_death = ft_atoi(argv[2]);
+	norms->time_to_eat = ft_atoi(argv[3]);
+	norms->time_to_sleep = ft_atoi(argv[4]);
+	norms->all_ate = 0;
+	norms->died = 0;
+	if (norms->philo_nbr == 1)
 		return (3);
-	if (rules->nb_philo < 2 || rules->time_death < 60 || rules->time_eat < 60
-		|| rules->time_sleep < 60 || rules->nb_philo > 200)
+	if (norms->philo_nbr < 2 || norms->time_to_death < 60 \
+	|| norms->time_to_eat < 60 || norms->time_to_sleep < 60 \
+	|| norms->philo_nbr > 200)
 		return (1);
 	if (argv[5])
 	{
-		rules->nb_eat = ft_atoi(argv[5]);
-		if (rules->nb_eat <= 0)
+		norms->nb_eat = ft_atoi(argv[5]);
+		if (norms->nb_eat <= 0)
 			return (1);
 	}
 	else
-		rules->nb_eat = -1;
-	if (init_mutex(rules))
+		norms->nb_eat = -1;
+	if (init_mutex(norms))
 		return (2);
-	init_philosophers(rules);
 	return (0);
 }
 
-void	exit_program(t_rules *rules, t_philosopher *philos)
+void	exit_program(t_norms *norms, t_philosopher *philos)
 {
 	int	i;
 
 	i = -1;
-	while (++i < rules->nb_philo)
+	while (++i < norms->philo_nbr)
 		pthread_join(philos[i].thread_id, NULL);
 	i = 0;
-	while (++i <= rules->nb_philo)
-		pthread_mutex_destroy(&(rules->forks[i]));
-	pthread_mutex_destroy(&(rules->writing));
-	pthread_mutex_destroy(&(rules->m_died));
-	pthread_mutex_destroy(&(rules->m_eat_all));
-	pthread_mutex_destroy(&(rules->m_waiting));
-	pthread_mutex_destroy(&(rules->m_all_ate));
+	while (++i <= norms->philo_nbr)
+		pthread_mutex_destroy(&(norms->forks[i]));
+	pthread_mutex_destroy(&(norms->writing));
+	pthread_mutex_destroy(&(norms->m_died));
+	pthread_mutex_destroy(&(norms->m_eat_all));
+	pthread_mutex_destroy(&(norms->m_waiting));
+	pthread_mutex_destroy(&(norms->m_all_ate));
 }

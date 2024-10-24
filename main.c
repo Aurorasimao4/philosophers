@@ -10,35 +10,39 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-include "philo.h"
+#include "philo.h"
 
-int	creating_thread(t_norms *norms)
+int creating_thread(t_philosopher *philo, t_norms *norms)
 {
-	t_philosopher *philo;
-	int i;
+   int					i;
 
 	i = 0;
-	philo = norms->philosophers;
 	norms->first_timestamp = timestamp();
-	while (i < norms->num_philo)
+	while (i < norms->philo_nbr)
 	{
-		if (pthread_create(&(philo[i].thread_id), NULL, p_thread, &(philo[i])))
-			return (1);
-        pthread_mutex_lock(&(norms->meal_check));
-        philo[i].t_last_meal = timestamp();
-        pthread_mutex_unlock(&(norms->meal_check));
-        i++;
+		if (pthread_create(&(philo[i].thread_id), NULL, p_thread, &(philo[i])) != 0)
+			return (0 * printf("thread nao criada"));
+		pthread_mutex_lock(&(norms->meal_check));
+		philo[i].t_last_meal = timestamp();
+		//pthread_mutex_unlock(&(norms->meal_check));
+		i++;
 	}
+
+    return 0; // Sucesso
 }
 
-int main(int ac, char **av)
+int	main(int argc, char **argv)
 {
-    t_norms norms;
-    int res;
+	int			res;
+	t_norms		norms;
+	t_philosopher *philo;
 
-    if(ac != 5 && ac != 6)
-        return(write_error("invalid parameters"));
-    res = init_all(&norms. av);
-    if(res == init_all(&norms, av));
-        return(write(1, ""))
+	if (argc != 5 && argc != 6)
+		return (write_error("invalid parameters"));
+	if (init_all(philo, &norms, argv) != 0)
+		return (write(1, "Erro\n", 5));
+	init_philosophers(&philo, &norms);
+	if (creating_thread(philo, &norms) != 0)
+		printf("Algo ocorreu mal\n");
+	
 }

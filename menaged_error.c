@@ -28,8 +28,8 @@ int	write_error(char *str)
 int	error_manager(int error)
 {
 	if (error == 1)
-		return (write_error("Verify arguments"));
+		return (write_error("VERIFIQUE OS ARGUMENTOS"));
 	if (error == 2)
-		return (write_error("Fatal error when intializing mutex"));
+		return (write_error("ERRO AO INICIALIZAR A MUTEX"));
 	return (1);
 }

@@ -48,36 +48,36 @@ long long	time_diff(long long past, long long pres)
 	return (pres - past);
 }
 
-void	waiting(long long time, t_rules *rules)
+void	waiting(long long time, t_norms *norms)
 {
 	long long	now;
 
 	now = timestamp();
 	while (1)
 	{
-		pthread_mutex_lock(&(rules->m_died));
-		if (rules->died)
+		pthread_mutex_lock(&(norms->m_died));
+		if (norms->died)
 		{
-			pthread_mutex_unlock(&(rules->m_died));
+			pthread_mutex_unlock(&(norms->m_died));
 			return ;
 		}
-		pthread_mutex_unlock(&(rules->m_died));
+		pthread_mutex_unlock(&(norms->m_died));
 		if (time_diff(now, timestamp()) >= time)
 			break ;
 	}
 }
 
-void	action_write(t_rules *rules, int id, char *string)
+void	action_write(t_norms *norms, int id, char *string)
 {
-	pthread_mutex_lock(&(rules->writing));
-	pthread_mutex_lock(&(rules->m_died));
-	if (!(rules->died))
+	pthread_mutex_lock(&(norms->writing));
+	pthread_mutex_lock(&(norms->m_died));
+	if (!(norms->died))
 	{
-		printf("%lld ", timestamp() - rules->first_timestamp);
+		printf("%lld ", timestamp() - norms->first_timestamp);
 		printf("%d ", id);
 		printf("%s\n", string);
 	}
-	pthread_mutex_unlock(&(rules->m_died));
-	pthread_mutex_unlock(&(rules->writing));
+	pthread_mutex_unlock(&(norms->m_died));
+	pthread_mutex_unlock(&(norms->writing));
 	return ;
 }

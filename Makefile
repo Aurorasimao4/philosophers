@@ -13,9 +13,9 @@
 NAME = philo
 FLAGS = -Wall -Wextra -Werror
 CC = cc
-PROGRAM = # AQUI COLOCAR OS NOMES DAS PASTAS
+SRC = init_func.c main.c menaged_error.c routine.c utils.c
 
-OBJ = $(PROGRAM:.c=.o)
+OBJ = $(SRC:.c=.o)
 
 GREEN = \033[0;32m
 RED = \033[0;31m
@@ -28,7 +28,6 @@ $(NAME) : $(OBJ)
 				$(CC) $(FLAGS) $(OBJ) -o $(NAME)
 				@echo "$(GREEN)Executavel gerado: $@$(RESET)"
 
-
 clean:
 				rm -f $(OBJ)
 				@echo "$(RED)Arquivos objeto removidos.$(RESET)"
@@ -36,4 +35,4 @@ fclean: clean
 				rm -f $(NAME)
 				@echo "$(RED)Executável removido.$(RESET)"
 re: fclean all
-.PHONY: all clear 
+.PHONY: all clean fclean re
